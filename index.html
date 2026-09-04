@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>할일장</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #eef1ee;
+    --surface: #ffffff;
+    --surface-2: #f6f7f4;
+    --ink: #1f2420;
+    --sub: #6b7267;
+    --accent: #2f6f5e;
+    --accent-strong: #234f42;
+    --on-accent: #ffffff;
+    --border: #dde1da;
+    --done: #9aa093;
+    --danger: #ac4632;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14170f;
+      --surface: #1e221b;
+      --surface-2: #262b21;
+      --ink: #e7e9e1;
+      --sub: #98a091;
+      --accent: #67b79e;
+      --accent-strong: #86cbb3;
+      --on-accent: #0c1310;
+      --border: #2d3227;
+      --done: #676d60;
+      --danger: #d9836d;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", "Malgun Gothic", sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 56px 20px;
+    min-height: 100vh;
+  }
+
+  .ledger {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
+  }
+
+  h1 {
+    font-family: "Gowun Batang", serif;
+    font-weight: 700;
+    font-size: 34px;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+
+  .date {
+    font-size: 13px;
+    color: var(--sub);
+    margin: 0 0 28px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 15px;
+  }
+
+  input[type="text"]::placeholder { color: var(--sub); }
+
+  input[type="text"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .add-btn {
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .add-btn:hover { background: var(--accent-strong); }
+  .add-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    padding: 0 0 10px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--sub);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+    font-weight: 500;
+  }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  li:last-child { border-bottom: none; }
+
+  .checkbox {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid var(--sub);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checkbox svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .checkbox.checked svg { opacity: 1; transform: scale(1); }
+
+  .text {
+    flex: 1;
+    font-size: 15px;
+    line-height: 1.4;
+    word-break: break-word;
+    cursor: pointer;
+  }
+  li.done .text {
+    color: var(--done);
+    text-decoration: line-through;
+  }
+
+  .delete {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--sub);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.6;
+    transition: opacity 0.15s ease, color 0.15s ease;
+  }
+  .delete:hover { opacity: 1; color: var(--danger); }
+  .delete:focus-visible { outline: 2px solid var(--accent); opacity: 1; }
+
+  .empty {
+    text-align: center;
+    color: var(--sub);
+    font-size: 14px;
+    padding: 32px 0;
+  }
+
+  .footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    color: var(--sub);
+  }
+
+  .footer-row .count {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .progress-track {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.25s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="ledger">
+  <p class="eyebrow" id="eyebrow">Task Ledger</p>
+  <h1>할일장</h1>
+  <p class="date" id="today-date"></p>
+
+  <div class="input-row">
+    <input type="text" id="todo-input" placeholder="할 일을 적어보세요" maxlength="200">
+    <button class="add-btn" id="add-btn">추가</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-filter="all">전체</button>
+    <button class="tab" data-filter="active">진행중</button>
+    <button class="tab" data-filter="done">완료</button>
+  </div>
+
+  <ul id="todo-list"></ul>
+
+  <div class="footer">
+    <div class="footer-row">
+      <span id="footer-label">오늘의 진행률</span>
+      <span class="count" id="footer-count">0 / 0</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = "haliljang-todos";
+  const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  let todos;
+  try {
+    todos = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  } catch (e) {
+    todos = null;
+  }
+  if (!Array.isArray(todos)) {
+    todos = [
+      { id: 1, text: "우유랑 계란 사기", done: false },
+      { id: 2, text: "이번 주 회의 자료 초안 작성", done: false },
+      { id: 3, text: "할일장 만들어보기", done: true }
+    ];
+  }
+
+  let filter = "all";
+
+  const listEl = document.getElementById("todo-list");
+  const inputEl = document.getElementById("todo-input");
+  const addBtn = document.getElementById("add-btn");
+  const countEl = document.getElementById("footer-count");
+  const fillEl = document.getElementById("progress-fill");
+  const dateEl = document.getElementById("today-date");
+  const tabs = document.querySelectorAll(".tab");
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(todos)); } catch (e) {}
+  }
+
+  function setDate() {
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    const d = new Date();
+    dateEl.textContent = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+  }
+
+  function addTodo(text) {
+    text = text.trim();
+    if (!text) return;
+    todos.unshift({ id: Date.now(), text, done: false });
+    save();
+    render();
+  }
+
+  function toggleTodo(id) {
+    const t = todos.find((t) => t.id === id);
+    if (t) t.done = !t.done;
+    save();
+    render();
+  }
+
+  function deleteTodo(id) {
+    todos = todos.filter((t) => t.id !== id);
+    save();
+    render();
+  }
+
+  function render() {
+    const filtered = todos.filter((t) => {
+      if (filter === "active") return !t.done;
+      if (filter === "done") return t.done;
+      return true;
+    });
+
+    listEl.innerHTML = "";
+
+    if (filtered.length === 0) {
+      const msg = filter === "done" ? "완료한 항목이 없습니다" :
+                  filter === "active" ? "진행중인 항목이 없습니다" : "할 일이 없습니다";
+      listEl.innerHTML = `<div class="empty">${msg}</div>`;
+    } else {
+      filtered.forEach((t) => {
+        const li = document.createElement("li");
+        li.className = t.done ? "done" : "";
+
+        const box = document.createElement("div");
+        box.className = "checkbox" + (t.done ? " checked" : "");
+        box.innerHTML = CHECK_SVG;
+        box.addEventListener("click", () => toggleTodo(t.id));
+
+        const span = document.createElement("span");
+        span.className = "text";
+        span.textContent = t.text;
+        span.addEventListener("click", () => toggleTodo(t.id));
+
+        const del = document.createElement("button");
+        del.className = "delete";
+        del.textContent = "×";
+        del.setAttribute("aria-label", "삭제");
+        del.addEventListener("click", () => deleteTodo(t.id));
+
+        li.appendChild(box);
+        li.appendChild(span);
+        li.appendChild(del);
+        listEl.appendChild(li);
+      });
+    }
+
+    const total = todos.length;
+    const done = todos.filter((t) => t.done).length;
+    countEl.textContent = `${done} / ${total}`;
+    fillEl.style.width = total ? `${(done / total) * 100}%` : "0%";
+  }
+
+  addBtn.addEventListener("click", () => {
+    addTodo(inputEl.value);
+    inputEl.value = "";
+    inputEl.focus();
+  });
+
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      addTodo(inputEl.value);
+      inputEl.value = "";
+    }
+  });
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      filter = tab.dataset.filter;
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      render();
+    });
+  });
+
+  setDate();
+  render();
+})();
+</script>
+</body>
+</html>
